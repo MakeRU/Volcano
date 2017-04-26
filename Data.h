@@ -21,10 +21,10 @@ const double Rb_min = 1.0e-9; // м
 
 //
 double Xm, Zm, Z_max, Z_ch;
-int Im,J_max, Ig;
+int Im,J_max, Ig, I_crack;
 int *Jm;
 double hx, hz;
-double Tm, tau, T_all, T_out, T_surf;
+double Tm, tau, T_all, T_out, T_surf, T_crack;
 double E, J, J_e, kapp, V_m, d_m, N_0, V_0;
 double rho_surf, Cp_temp, u_av, dMg, dP, P_eq, W_cr;
 

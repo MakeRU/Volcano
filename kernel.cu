@@ -38,32 +38,34 @@ __device__ __host__ double StateEq1(double p, double Cg, double rho0, double c0,
 		}
 	}
 
-double FreeSurf(double T, double p)
+double FreeSurf(double T, double p, int i, int I_crack)
 {
 //	double p_tmp;
 //	if (T > T_surf) {return p0;}
 //		else {return T* (p0-p) / (T_surf) + p;};
 //	p_tmp = p / 1.2;
 //	if (p_tmp < p0) {p_tmp = p0;};
-	return p0;
+	if (i <= I_crack) return p0;
+	else return p;
 }
 
 int main()
 {
 	var_wall = 1;
-	var_Eq_state = 1;
+	var_Eq_state = 0;
 	out_num = 0;
 	Tm = 0.0;
-	T_all = 1.5;
+	T_all = 0.1;
+	T_crack = 0.05;
 	tau = 1.0e-6;
-	T_out = 1000.0*tau;
+	T_out = 1.0*tau;
 	T_surf = 10.0*tau;
 	hx = 0.25;
 	hz = 1.0;
 	Xm = 10.0;
-	Zm = 1000.0;
+	Zm = 100.0;
 	Z_max = 1.5*Zm;
-	Z_ch = 7.5e3;
+	Z_ch = 6.6e3;
 
 	Im = int(Xm / hx) + 1;
 	J_max = int(Z_max / hz) + 1; 
@@ -168,7 +170,7 @@ int main()
        
 	rho_surf = rho[0][0];
 
-	for (i = 0; i < Im; i++){
+/*	for (i = 0; i < Im; i++){
            	for (j = 1; j < J_max-1; j++){
            		if (j > Jm[i]) {
            			u[i][j] = 0.0;
@@ -180,6 +182,7 @@ int main()
               	}
             }
         }
+	*/	
 
 	sprintf(out_name, "DataI/P");
 	cut_file = fopen( out_name, "wt" );
@@ -191,7 +194,30 @@ int main()
 		Tm = Tm + tau;
         printf("Time %5.6lf s \n", Tm);
 
+		if (Tm < T_crack) { I_crack = round(Im*Tm / T_crack); }
+		else I_crack = Im;
 
+	/*	for (i = 0; i < Im; i++){
+			for (j = 1; j < J_max - 1; j++){
+				if ((j > Jm[i]) && (i <= I_crack)) {
+					u[i][j] = 0.0;
+					v[i][j] = 0.0;
+					mu[i][j] = 1.0;
+					p[i][j] = p0;
+					rho[i][j] = StateEq1(p[i][j], Cg[i][j], rho0, c0, Gam_lq, p0, var_Eq_state);
+
+				}
+				if ((j > Jm[i]) && (i > I_crack)) {
+					u[i][j] = 0.0;
+					v[i][j] = 0.0;
+					mu[i][j] = mu[i][Jm[i]]; 
+					p[i][j] = p[i][Jm[i]];
+					rho[i][j] = StateEq1(p[i][j], Cg[i][j], rho0, c0, Gam_lq, p0, var_Eq_state);
+
+				}
+			}
+		}
+*/
         // ����� u
 
         for (i = 1; i < Im-1; i++){
@@ -506,7 +532,7 @@ int main()
            			Cp[i][j] = Cp[i][1000];
            			Cg[i][j] = Cg[i][1000];
 					mu[i][j] = mu[i][1000]; */
-           			p[i][j] = FreeSurf(Tm, p[i][j]);
+           			p[i][j] = FreeSurf(Tm, p[i][j],i, I_crack);
 					rho[i][j] = StateEq1(p[i][j], Cg[i][j], rho0, c0, Gam_lq, p0, var_Eq_state);
               	}
             }
@@ -562,14 +588,15 @@ int main()
     		}
     	fclose( out_file );
 
-
+		
     	out_num = out_num + 1;
       	
-
+		
     	fprintf( cut_file, "%lf \t %lf \t %lf \t %lf \t %lf \t %lf \t %e \t %e \t %e \t %e \t %lf \t %e\n",
     	    					Tm*1.0e3, p[i_out][j_out]/p0, mu[i_out][j_out], Cp[i_out][j_out],
     	    					Eps[i_out][j_out],D_eff[i_out][j_out]/De, Rb[i_out][j_out]*1.0e6, Mg[i_out][j_out],
     	    					Cg[i_out][j_out], dRb[i_out][j_out], Pg[i_out][j_out]/p0, Nt[i_out][j_out]);
+	
 	  }							
 	}  while (Tm < T_all);
 
